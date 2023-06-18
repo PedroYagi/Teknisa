@@ -7,7 +7,7 @@ const port = 5000;
 
 app.use(bodyParser.json());
 
-app.get('/syncDatase', async(req, res) => {
+app.get('/syncDatabase', async(req, res) => {
     const database = require('./database/db');
 
     try {
@@ -23,7 +23,9 @@ app.post('/createProgrammer', async(req,res)=>{
     try {
         const params = req.body;
 
-        const properties = ['name', 'javascript', 'java', 'python'];
+        console.log(req.body);
+
+        const properties = ['name', 'python', 'java', 'javascript'];
 
         validateProperties(properties, params, 'every');
 
@@ -46,7 +48,7 @@ app.get('/retrieveProgrammer', async(req,res)=>{
         const params = req.body;
 
         if('id' in params){
-            const record = validateID(params);
+            const record = await validateID(params);
 
             if(record) {
                 res.send(record);
@@ -54,6 +56,11 @@ app.get('/retrieveProgrammer', async(req,res)=>{
                 res.send('No programmer found using received ID');
             }
         };
+
+        const records = await programmer.findAll();
+
+        res.send(records);
+        ;
     } catch (error) {
         res.send(error);
     }
@@ -68,7 +75,7 @@ app.delete('/deleteProgrammer', async(req,res) => {
             return;
         }
 
-        const record = validateID(params);
+        const record = await validateID(params);
 
         await record.destroy();
 
@@ -87,16 +94,17 @@ app.put('/updateProgrammers', async (req,res) => {
             return;
         }
 
-        const record = validateID(params);
+        const record = await validateID(params);
+        console.log(record);
 
         const properties = ['name','python','java','javascript'];
 
         validateProperties(properties, params, 'some');
 
-        record.name = param.name || record.name;
-        record.python = param.python || record.python;
-        record.java = param.java || record.java;
-        record.javascript = param.javascript || record.javascript;
+        record.name = params.name || record.name;
+        record.python = params.python || record.python;
+        record.java = params.java || record.java;
+        record.javascript = params.javascript || record.javascript;
 
         await record.save();
 
@@ -117,7 +125,7 @@ const validateID = async (params) => {
         if(!record){
             throw `Programmer ID not found.`;
         }
-
+        //console.log(record);
         return record;
     } catch (error) {
         throw error;
@@ -128,12 +136,13 @@ const validateProperties = (properties, params, fn) => {
     try {
         const check = properties[fn]((property) => {
             return property in params;
-        });
+          });
+      
 
-        if(!check){
+          if (!check) {
             const propStr = properties.join(', ');
             throw `Request body doesn't have any of the following properties: ${propStr}`;
-        }
+          }      
 
         return true;
     } catch (error) {
