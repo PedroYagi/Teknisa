@@ -7,6 +7,11 @@ const port = 5000;
 
 app.use(bodyParser.json());
 
+app.get('/', (req, res) => {
+    res.sendFile('index.html', {root: __dirname});
+  });
+  
+
 app.get('/syncDatabase', async(req, res) => {
     const database = require('./database/db');
 
@@ -27,7 +32,7 @@ app.post('/createProgrammer', async(req,res)=>{
 
         const properties = ['name', 'python', 'java', 'javascript'];
 
-        validateProperties(properties, params, 'every');
+        await validateProperties(properties, params, 'every');
 
         const newProgrammer = await programmer.create({
             name: params.name,
@@ -51,15 +56,17 @@ app.get('/retrieveProgrammer', async(req,res)=>{
             const record = await validateID(params);
 
             if(record) {
-                res.send(record);
+                await res.send(record);
+                return;
             } else {
-                res.send('No programmer found using received ID');
+                await res.send('No programmer found using received ID');
+                return;
             }
         };
 
         const records = await programmer.findAll();
 
-        res.send(records);
+        await res.send(records);
         ;
     } catch (error) {
         res.send(error);
@@ -99,7 +106,7 @@ app.put('/updateProgrammers', async (req,res) => {
 
         const properties = ['name','python','java','javascript'];
 
-        validateProperties(properties, params, 'some');
+        await validateProperties(properties, params, 'some');
 
         record.name = params.name || record.name;
         record.python = params.python || record.python;
